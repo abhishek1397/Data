@@ -1,4 +1,4 @@
-# Rank()
+# Rank() Pandas
 
 Let's go over the `rank()` function in **Pandas**, which is similar to `RANK()` or `ROW_NUMBER()` in SQL.
 
