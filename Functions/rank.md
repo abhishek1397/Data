@@ -120,95 +120,146 @@ print(df)
 | `first`   | Assign ranks in the order they appear in the Series |
 | `dense`   | Like min, but no gaps in ranks                      |
 
----
 
-# Sorting
+# SQL ranking functions and their Pandas equivalents
 
-```python
-pivot_df = pivot_df.sort_index().reset_index(drop=True)
-```
+Let's walk through **different SQL ranking functions** and their **Pandas equivalents**, step by step. We’ll use the same sample data and show how to:
 
-This line is **cleaning and preparing your pivoted DataFrame**, especially after using `pivot()`.
-
----
-
-## 🔍 Step-by-Step Explanation
-
-### 1️⃣ `pivot_df.sort_index()`
-
-* This **sorts the rows** of the DataFrame by the **row index** (usually integers).
-* If you've used `pivot()` with an index like `rn` (row number), sorting ensures that the rows appear in the correct order (e.g., row 1, 2, 3...).
+1. Use each SQL ranking function (`ROW_NUMBER`, `RANK`, `DENSE_RANK`)
+2. Translate it into **Pandas**
+3. Show and explain the output
 
 ---
 
-### 2️⃣ `.reset_index(drop=True)`
+## 🧾 Sample Data
 
-* Resets the row index to default `0, 1, 2, ...`
-* **`drop=True`**: prevents the old index from becoming a new column.
+Let’s use this table:
 
----
-
-## 📘 Example:
-
-Let’s say after pivoting, you have this:
+| Name    | Department | Score |
+| ------- | ---------- | ----- |
+| Alice   | HR         | 95    |
+| Bob     | HR         | 88    |
+| Frank   | HR         | 88    |
+| Charlie | IT         | 92    |
+| David   | IT         | 92    |
+| Eve     | IT         | 85    |
 
 ```python
 import pandas as pd
 
-data = {
-    'Doctor': {2: 'Priya', 1: 'Eve'},
-    'Professor': {1: 'Bob', 2: 'Jacob'},
-    'Singer': {1: 'John', 2: 'Meera'},
-    'Actor': {1: 'Alice', 2: 'Dan'}
-}
-
-pivot_df = pd.DataFrame(data)
-print(pivot_df)
+# Sample DataFrame
+df = pd.DataFrame({
+    'Name': ['Alice', 'Bob', 'Frank', 'Charlie', 'David', 'Eve'],
+    'Department': ['HR', 'HR', 'HR', 'IT', 'IT', 'IT'],
+    'Score': [95, 88, 88, 92, 92, 85]
+})
 ```
-
-### Output before cleaning:
-
-```
-   Doctor Professor Singer  Actor
-2  Priya    Jacob  Meera    Dan
-1    Eve      Bob   John  Alice
-```
-
-Notice the **index is out of order** (2, then 1).
 
 ---
 
-### Apply the cleanup:
+## 1️⃣ `ROW_NUMBER()` (SQL) → `rank(method='first')` (Pandas)
+
+### 💡 SQL:
+
+```sql
+ROW_NUMBER() OVER (PARTITION BY Department ORDER BY Score DESC)
+```
+
+### ✅ Pandas Equivalent:
 
 ```python
-pivot_df = pivot_df.sort_index().reset_index(drop=True)
-print(pivot_df)
+df['row_number'] = df.groupby('Department')['Score'].rank(method='first', ascending=False).astype(int)
 ```
 
-### ✅ Output after sorting and resetting index:
+**Explanation**:
 
-```
-  Doctor Professor Singer  Actor
-0    Eve       Bob   John  Alice
-1  Priya     Jacob  Meera    Dan
-```
+* Ranks scores **within each department**
+* Assigns **unique, sequential** numbers (even for ties, order matters)
 
-* Rows are now in the correct order (based on `rn`)
-* Index is reset to `0, 1` instead of `2, 1`
+### 🧾 Output:
+
+| Name    | Dept | Score | row\_number |
+| ------- | ---- | ----- | ----------- |
+| Alice   | HR   | 95    | 1           |
+| Bob     | HR   | 88    | 2           |
+| Frank   | HR   | 88    | 3           |
+| Charlie | IT   | 92    | 1           |
+| David   | IT   | 92    | 2           |
+| Eve     | IT   | 85    | 3           |
 
 ---
 
-## ✅ Why Use This?
+## 2️⃣ `RANK()` (SQL) → `rank(method='min')` (Pandas)
 
-When you pivot or group data:
+### 💡 SQL:
 
-* The **row index might not be sorted**
-* It might retain unwanted index values (like `rn`, `group labels`, etc.)
+```sql
+RANK() OVER (PARTITION BY Department ORDER BY Score DESC)
+```
 
-Using `sort_index().reset_index(drop=True)` ensures:
+### ✅ Pandas Equivalent:
 
-* Clean, readable, correctly ordered DataFrame
-* Good for exporting, plotting, or displaying
+```python
+df['rank'] = df.groupby('Department')['Score'].rank(method='min', ascending=False).astype(int)
+```
+
+**Explanation**:
+
+* Same scores get **same rank**
+* **Gaps** appear in ranking if there are ties
+
+### 🧾 Output:
+
+| Name    | Dept | Score | rank |
+| ------- | ---- | ----- | ---- |
+| Alice   | HR   | 95    | 1    |
+| Bob     | HR   | 88    | 2    |
+| Frank   | HR   | 88    | 2    |
+| Charlie | IT   | 92    | 1    |
+| David   | IT   | 92    | 1    |
+| Eve     | IT   | 85    | 3    |
 
 ---
+
+## 3️⃣ `DENSE_RANK()` (SQL) → `rank(method='dense')` (Pandas)
+
+### 💡 SQL:
+
+```sql
+DENSE_RANK() OVER (PARTITION BY Department ORDER BY Score DESC)
+```
+
+### ✅ Pandas Equivalent:
+
+```python
+df['dense_rank'] = df.groupby('Department')['Score'].rank(method='dense', ascending=False).astype(int)
+```
+
+**Explanation**:
+
+* Same as `RANK`, but **no gaps** in ranks
+
+### 🧾 Output:
+
+| Name    | Dept | Score | dense\_rank |
+| ------- | ---- | ----- | ----------- |
+| Alice   | HR   | 95    | 1           |
+| Bob     | HR   | 88    | 2           |
+| Frank   | HR   | 88    | 2           |
+| Charlie | IT   | 92    | 1           |
+| David   | IT   | 92    | 1           |
+| Eve     | IT   | 85    | 2           |
+
+---
+
+## ✅ Summary Table
+
+| SQL Function   | Pandas Method          | Handles Ties | Gaps in Ranks? |
+| -------------- | ---------------------- | ------------ | -------------- |
+| `ROW_NUMBER()` | `rank(method='first')` | ❌ No         | ❌ No           |
+| `RANK()`       | `rank(method='min')`   | ✅ Yes        | ✅ Yes          |
+| `DENSE_RANK()` | `rank(method='dense')` | ✅ Yes        | ❌ No           |
+
+---
+
 
