@@ -3,6 +3,8 @@
 **Tree Structure Classification** problem where we analyze a **parent-child relationship** within a binary tree to determine each node's type:
 [Link](https://www.hackerrank.com/challenges/binary-search-tree-1/problem?isFullScreen=true)
 
+![image](https://github.com/user-attachments/assets/3b4aecfe-3a6c-4270-82bd-c5c7a476ef44)
+
 ---
 
 ### 🧠 **Understanding the Problem**
