@@ -162,6 +162,17 @@ END
 
 ---
 
+> Note:
+
+```plaintext
+- df.apply(...):
+    This is a pandas function used to apply a function across either rows or columns of a DataFrame.
+- axis=1:
+    This tells pandas to apply the function row-wise (i.e., each row is passed to get_node_type()).
+    axis=0 would mean column-wise, which we don't want here.
+```
+---
+
 ### ✅ Step 4: Drop Duplicates and Sort
 
 Since the node can appear multiple times (as child in one row, as parent in another), we drop duplicates by column `'N'`.
